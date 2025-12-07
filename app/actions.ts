@@ -12,12 +12,14 @@ export async function uploadFile(formData: FormData): Promise<{ success: boolean
     }
 
     const path = formData.get('path') as string || '/';
+    const relativePath = formData.get('relativePath') as string;
+    const filename = relativePath || file.name;
 
     try {
         const client = getWebDAVClient();
 
         // WebDAV putFileContents
-        const uploadPath = path === '/' ? `/${file.name}` : `${path}/${file.name}`;
+        const uploadPath = path === '/' ? `/${filename}` : `${path}/${filename}`;
 
         // Ensure parent directory exists
         const parentPath = uploadPath.split('/').slice(0, -1).join('/');

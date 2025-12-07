@@ -5,7 +5,6 @@ import { CreateFolderButton } from '@/components/file-browser/CreateFolderButton
 import { UploadButton } from '@/components/file-browser/UploadButton';
 import { FileItem } from '@/lib/types';
 import { Breadcrumbs } from '@/components/file-browser/Breadcrumbs';
-import { DragDropZone } from '@/components/file-browser/DragDropZone';
 
 export default async function Home({
   searchParams,
@@ -102,26 +101,24 @@ export default async function Home({
     });
 
     return (
-      <DragDropZone currentPath={path}>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Breadcrumbs currentPath={path} />
-            </div>
-            <div className="flex gap-2 items-center">
-              <CreateFolderButton currentPath={path} />
-              <UploadButton currentPath={path} />
-            </div>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Breadcrumbs currentPath={path} />
           </div>
-          <FileBrowserClient
-            initialData={files}
-            currentPath={path}
-            sort={sort}
-            order={order}
-            search={search || ''}
-          />
+          <div className="flex gap-2 items-center">
+            <CreateFolderButton currentPath={path} />
+            <UploadButton currentPath={path} />
+          </div>
         </div>
-      </DragDropZone>
+        <FileBrowserClient
+          initialData={files}
+          currentPath={path}
+          sort={sort}
+          order={order}
+          search={search || ''}
+        />
+      </div>
     );
   } catch (error) {
     console.error(error);

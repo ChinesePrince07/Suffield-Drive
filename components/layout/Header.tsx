@@ -22,9 +22,9 @@ export function Header() {
                 <Image
                     src="/logo.png"
                     alt="Logo"
-                    width={32}
-                    height={32}
-                    className="rounded-lg w-8 h-8 sm:w-9 sm:h-9"
+                    width={36}
+                    height={36}
+                    className="rounded-lg"
                 />
                 <span className="text-lg sm:text-xl font-bold text-foreground hidden sm:inline">{SITE_TITLE}</span>
             </Link>

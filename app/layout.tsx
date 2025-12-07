@@ -6,6 +6,8 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ConfirmProvider } from "@/lib/confirm-context";
 import { GlobalDragDropHandler } from "@/components/file-browser/GlobalDragDropHandler";
 import { ClipboardProvider } from "@/lib/clipboard-context";
+import { DragDropZone } from "@/components/file-browser/DragDropZone";
+import { Suspense } from 'react';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,12 +36,16 @@ export default async function RootLayout({
               <GlobalDragDropHandler />
               <div className="h-screen bg-background overflow-hidden">
                 {isAuthenticated ? (
-                  <div className="flex-1 flex flex-col h-full overflow-hidden">
-                    <Header />
-                    <main className="flex-1 overflow-auto p-6">
-                      {children}
-                    </main>
-                  </div>
+                  <Suspense fallback={<div className="flex-1 flex flex-col h-full overflow-hidden"><Header /><main className="flex-1 overflow-auto p-6">{children}</main></div>}>
+                    <DragDropZone>
+                      <div className="flex-1 flex flex-col h-full overflow-hidden">
+                        <Header />
+                        <main className="flex-1 overflow-auto p-6">
+                          {children}
+                        </main>
+                      </div>
+                    </DragDropZone>
+                  </Suspense>
                 ) : (
                   <div className="flex-1 flex flex-col overflow-hidden">
                     <main className="flex-1 overflow-auto p-6">

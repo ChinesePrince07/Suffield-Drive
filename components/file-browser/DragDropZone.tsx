@@ -70,6 +70,7 @@ export function DragDropZone({ children, currentPath }: DragDropZoneProps) {
                     const formData = new FormData();
                     formData.append('file', file);
                     formData.append('path', path);
+                    formData.append('relativePath', file.name);
 
                     try {
                         await uploadFile(formData);
@@ -172,18 +173,18 @@ export function DragDropZone({ children, currentPath }: DragDropZoneProps) {
 
     return (
         <div
-            className="relative h-full min-h-[calc(100vh-12rem)]"
+            className="relative h-full w-full"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
         >
             {children}
             {isDragging && (
-                <div className="absolute inset-0 bg-primary/10 border-2 border-dashed border-primary rounded-xl flex flex-col items-center justify-center z-50 animate-in fade-in duration-200">
+                <div className="absolute inset-0 bg-primary/10 border-4 border-dashed border-primary z-50 flex flex-col items-center justify-center animate-in fade-in duration-200 backdrop-blur-sm">
                     <div className="bg-background p-6 rounded-full shadow-xl mb-4">
                         <UploadCloud className="h-10 w-10 text-primary animate-bounce" />
                     </div>
-                    <h3 className="text-xl font-semibold text-primary">Drop files or folders to upload</h3>
+                    <h3 className="text-2xl font-bold text-primary">Drop files to upload</h3>
                 </div>
             )}
             {isUploading && (
