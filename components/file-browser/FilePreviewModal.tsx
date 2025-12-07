@@ -119,11 +119,18 @@ export function FilePreviewModal({ item, isOpen, onClose }: FilePreviewModalProp
                     </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-auto p-4 bg-muted flex items-center justify-center">
+                <div className={`flex-1 bg-muted flex items-center justify-center ${isPdf ? 'p-0 overflow-hidden' : 'p-4 overflow-auto'}`}>
                     {isImage && downloadUrl ? (
                         <img src={downloadUrl} alt={item.basename} className="max-w-full max-h-full object-contain shadow-lg rounded-lg" />
                     ) : isPdf && downloadUrl ? (
-                        <iframe src={downloadUrl} className="w-full h-full rounded-lg shadow-lg bg-white" />
+                        <object data={downloadUrl} type="application/pdf" className="w-full h-full rounded-lg shadow-lg bg-white">
+                            <div className="flex flex-col items-center justify-center h-full gap-4">
+                                <p className="text-muted-foreground">Unable to display PDF directly.</p>
+                                <a href={downloadUrl} download target="_blank" rel="noreferrer">
+                                    <Button>Download PDF</Button>
+                                </a>
+                            </div>
+                        </object>
                     ) : isVideo && downloadUrl ? (
                         <video src={downloadUrl} controls className="max-w-full max-h-full rounded-lg shadow-lg">
                             Your browser does not support video playback.

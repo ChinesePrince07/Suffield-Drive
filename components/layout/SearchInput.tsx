@@ -11,11 +11,6 @@ export function SearchInput() {
     const { replace } = useRouter();
     const [searchValue, setSearchValue] = useState(searchParams.get('search') || '');
 
-    // Sync with URL params
-    useEffect(() => {
-        setSearchValue(searchParams.get('search') || '');
-    }, [searchParams]);
-
     const handleSearch = useCallback((term: string) => {
         const params = new URLSearchParams(searchParams);
         if (term) {
@@ -27,6 +22,19 @@ export function SearchInput() {
         replace(`${pathname}?${params.toString()}`);
     }, [searchParams, pathname, replace]);
 
+    // Sync with URL params
+    useEffect(() => {
+        setSearchValue(searchParams.get('search') || '');
+    }, [searchParams]);
+
+    // Debounce search
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            handleSearch(searchValue);
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [searchValue, handleSearch]);
+
     return (
         <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -35,14 +43,9 @@ export function SearchInput() {
                 className="pl-9 bg-secondary/50 border-transparent focus:bg-background transition-all"
                 value={searchValue}
                 onChange={(e) => {
-                    const value = e.target.value;
-                    setSearchValue(value);
-                    // Debounce the search
-                    const timeoutId = setTimeout(() => handleSearch(value), 300);
-                    return () => clearTimeout(timeoutId);
+                    setSearchValue(e.target.value);
                 }}
             />
         </div>
     );
 }
-

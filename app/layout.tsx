@@ -6,7 +6,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ConfirmProvider } from "@/lib/confirm-context";
 import { GlobalDragDropHandler } from "@/components/file-browser/GlobalDragDropHandler";
 import { ClipboardProvider } from "@/lib/clipboard-context";
-import { DragDropZone } from "@/components/file-browser/DragDropZone";
+
 import { Suspense } from 'react';
 
 const inter = Inter({ subsets: ["latin"] });
@@ -34,23 +34,27 @@ export default async function RootLayout({
           <ConfirmProvider>
             <ClipboardProvider>
               <GlobalDragDropHandler />
-              <div className="h-screen bg-background overflow-hidden">
+              <div className="min-h-[100dvh] bg-background flex flex-col">
                 {isAuthenticated ? (
-                  <Suspense fallback={<div className="flex-1 flex flex-col h-full overflow-hidden"><Header /><main className="flex-1 overflow-auto p-6">{children}</main></div>}>
-                    <DragDropZone>
-                      <div className="flex-1 flex flex-col h-full overflow-hidden">
-                        <Header />
-                        <main className="flex-1 overflow-auto p-6">
-                          {children}
-                        </main>
-                      </div>
-                    </DragDropZone>
+                  <Suspense fallback={<div className="h-full w-full flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+                    <div className="flex-1 flex flex-col">
+                      <Header />
+                      <main className="flex-1 p-4 sm:p-6 pb-24">
+                        {children}
+                      </main>
+                      <footer className="py-6 text-center text-sm text-muted-foreground/60">
+                        Made by Andy with love
+                      </footer>
+                    </div>
                   </Suspense>
                 ) : (
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <main className="flex-1 overflow-auto p-6">
+                  <div className="flex-1 flex flex-col">
+                    <main className="flex-1 p-4 sm:p-6">
                       {children}
                     </main>
+                    <footer className="py-6 text-center text-sm text-muted-foreground/60">
+                      Made by Andy with love
+                    </footer>
                   </div>
                 )}
               </div>

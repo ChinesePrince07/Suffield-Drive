@@ -123,7 +123,7 @@ export function SelectionArea({ children, onSelectionChange, items }: SelectionA
         <div
             ref={containerRef}
             onMouseDown={handleMouseDown}
-            className="relative h-full w-full"
+            className="relative min-h-full w-full"
         >
             {children}
             {isSelecting && selectionBox && (
