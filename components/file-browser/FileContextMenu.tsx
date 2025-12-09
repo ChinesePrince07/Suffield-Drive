@@ -61,7 +61,7 @@ export function FileContextMenu({ children, item, onRename, onMove, onDelete }: 
                 {children}
             </ContextMenuTrigger>
             <ContextMenuContent className="w-64 bg-popover border shadow-lg">
-                <ContextMenuItem onClick={() => window.open(`/api/file?path=${encodeURIComponent(item.filename)}`, '_blank')}>
+                <ContextMenuItem onClick={() => window.open(`/api/file?path=${encodeURIComponent(item.filename)}&inline=true`, '_blank')}>
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Open in New Tab
                 </ContextMenuItem>
@@ -80,17 +80,17 @@ export function FileContextMenu({ children, item, onRename, onMove, onDelete }: 
                         Cut
                     </ContextMenuItem>
                 )}
+                <ContextMenuSeparator />
+                <ContextMenuItem onClick={onRename}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Rename
+                </ContextMenuItem>
+                <ContextMenuItem onClick={onMove}>
+                    <FolderInput className="mr-2 h-4 w-4" />
+                    Move to...
+                </ContextMenuItem>
                 {isAdmin && (
                     <>
-                        <ContextMenuSeparator />
-                        <ContextMenuItem onClick={onRename}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Rename
-                        </ContextMenuItem>
-                        <ContextMenuItem onClick={onMove}>
-                            <FolderInput className="mr-2 h-4 w-4" />
-                            Move to...
-                        </ContextMenuItem>
                         <ContextMenuSeparator />
                         <ContextMenuItem onClick={onDelete} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
                             <Trash2 className="mr-2 h-4 w-4" />

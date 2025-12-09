@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Download, Trash2, FolderInput, Pencil, Copy, Scissors, X } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 interface FileActionsToolbarProps {
     selectedCount: number;
@@ -24,6 +25,8 @@ export function FileActionsToolbar({
     onCopy,
     onCut
 }: FileActionsToolbarProps) {
+    const { isAdmin } = useAuth();
+
     if (selectedCount === 0) return null;
 
     return (
@@ -42,9 +45,11 @@ export function FileActionsToolbar({
                 <Button variant="ghost" size="sm" onClick={onCopy} title="Copy">
                     <Copy className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={onCut} title="Cut">
-                    <Scissors className="h-4 w-4" />
-                </Button>
+                {isAdmin && (
+                    <Button variant="ghost" size="sm" onClick={onCut} title="Cut">
+                        <Scissors className="h-4 w-4" />
+                    </Button>
+                )}
                 <Button variant="ghost" size="sm" onClick={onMove} title="Move">
                     <FolderInput className="h-4 w-4" />
                 </Button>
@@ -53,9 +58,11 @@ export function FileActionsToolbar({
                         <Pencil className="h-4 w-4" />
                     </Button>
                 )}
-                <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50" title="Delete">
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+                {isAdmin && (
+                    <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-500 hover:text-red-600 hover:bg-red-50" title="Delete">
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                )}
             </div>
         </div>
     );

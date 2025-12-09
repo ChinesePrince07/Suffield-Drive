@@ -33,6 +33,7 @@ type SortDirection = 'asc' | 'desc';
 export function FileListView({ items, selectedIds, onSelectionChange, onSelectAll, onExclusiveSelect, onRename, onMove, onDelete }: FileListViewProps) {
     const router = useRouter();
     const [selectedItem, setSelectedItem] = useState<FileItem | null>(null);
+    const [lastClick, setLastClick] = useState<{ id: string; time: number } | null>(null);
     const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
@@ -149,6 +150,20 @@ export function FileListView({ items, selectedIds, onSelectionChange, onSelectAl
                                 // If clicking checkbox, let it handle itself
                                 if ((e.target as HTMLElement).closest('input[type="checkbox"]')) return;
 
+                                const now = Date.now();
+                                const isAlreadySelected = selectedIds.has(item.id);
+
+                                // Check if this is a second tap on the same item (within 500ms for mobile, or already selected)
+                                if (isAlreadySelected && item.type === 'directory' &&
+                                    lastClick?.id === item.id && (now - lastClick.time) < 500) {
+                                    // Navigate into folder on second tap
+                                    router.push(`/?folderId=${encodeURIComponent(item.filename)}`);
+                                    return;
+                                }
+
+                                // Update last click tracking
+                                setLastClick({ id: item.id, time: now });
+
                                 if (e.metaKey || e.ctrlKey) {
                                     // Toggle selection
                                     onSelectionChange(item.id, !selectedIds.has(item.id));
@@ -218,7 +233,27 @@ export function FileListView({ items, selectedIds, onSelectionChange, onSelectAl
                                         <TableCell className="font-medium py-3">
                                             <div className="flex items-center gap-3">
                                                 <Icon className={`h-5 w-5 ${isFolder ? 'text-blue-500 fill-blue-500/20' : 'text-muted-foreground'}`} />
-                                                <span className="text-sm text-foreground">{item.basename}</span>
+                                                {isFolder ? (
+                                                    <span
+                                                        className="text-sm text-foreground hover:underline cursor-pointer"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRowDoubleClick(item);
+                                                        }}
+                                                    >
+                                                        {item.basename}
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className="text-sm text-foreground hover:underline cursor-pointer"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRowDoubleClick(item);
+                                                        }}
+                                                    >
+                                                        {item.basename}
+                                                    </span>
+                                                )}
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-sm text-muted-foreground py-3">

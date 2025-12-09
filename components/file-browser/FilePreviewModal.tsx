@@ -4,6 +4,9 @@ import { FileItem } from '@/lib/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, X } from 'lucide-react';
+import { DocxViewer } from './DocxViewer';
+import { PdfViewer } from './PdfViewer';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 
 import { useState, useEffect } from 'react';
 
@@ -14,8 +17,11 @@ interface FilePreviewModalProps {
 }
 
 export function FilePreviewModal({ item, isOpen, onClose }: FilePreviewModalProps) {
-    if (!item) return null;
+    // All hooks must be called before any conditional returns (Rules of Hooks)
+    const isMobile = useIsMobile();
+    const [textContent, setTextContent] = useState<string | null>(null);
 
+    // Helper functions defined outside of conditional logic
     const getMimeType = (filename: string) => {
         const ext = filename.split('.').pop()?.toLowerCase();
 
@@ -61,16 +67,16 @@ export function FilePreviewModal({ item, isOpen, onClose }: FilePreviewModalProp
         return filename.split('.').pop()?.toLowerCase() || '';
     };
 
-    let mime = item.mime;
-    const inferredMime = getMimeType(item.filename);
-    const fileExt = getFileExtension(item.filename);
+    // Compute derived values (handle item being null)
+    let mime = item?.mime;
+    const inferredMime = item ? getMimeType(item.filename) : null;
+    const fileExt = item ? getFileExtension(item.filename) : '';
 
-    // If mime is missing or generic, or if we have a specific extension match like PDF, use the inferred one
-    if (!mime || mime === 'application/octet-stream' || inferredMime) {
+    if (item && (!mime || mime === 'application/octet-stream' || inferredMime)) {
         mime = inferredMime || mime;
     }
 
-    const downloadUrl = `/api/file?path=${encodeURIComponent(item.filename)}&mime=${encodeURIComponent(mime || '')}`;
+    const downloadUrl = item ? `/api/file?path=${encodeURIComponent(item.filename)}&mime=${encodeURIComponent(mime || '')}` : '';
 
     const isImage = mime?.startsWith('image/');
     const isPdf = mime?.includes('application/pdf');
@@ -79,10 +85,9 @@ export function FilePreviewModal({ item, isOpen, onClose }: FilePreviewModalProp
     const isAudio = mime?.startsWith('audio/');
     const isOfficeDoc = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'].includes(fileExt);
 
-    const [textContent, setTextContent] = useState<string | null>(null);
-
+    // useEffect MUST be called before any early return
     useEffect(() => {
-        if (isOpen && isText && downloadUrl) {
+        if (isOpen && isText && downloadUrl && item) {
             fetch(downloadUrl)
                 .then(res => res.text())
                 .then(setTextContent)
@@ -90,47 +95,53 @@ export function FilePreviewModal({ item, isOpen, onClose }: FilePreviewModalProp
         } else {
             setTextContent(null);
         }
-    }, [isOpen, isText, downloadUrl]);
+    }, [isOpen, isText, downloadUrl, item]);
+
+    // Early return AFTER all hooks
+    if (!item) return null;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent hideClose className="max-w-[95vw] w-[95vw] h-[95vh] flex flex-col p-0 bg-background border shadow-2xl rounded-xl overflow-hidden">
-                <DialogHeader className="p-4 border-b flex flex-row items-center justify-between space-y-0 bg-background shrink-0">
-                    <DialogTitle className="truncate flex-1 mr-4">{item.basename}</DialogTitle>
-                    <div className="flex items-center gap-2">
-                        {downloadUrl && (
-                            <>
-                                <a href={downloadUrl} target="_blank" rel="noreferrer">
-                                    <Button size="sm" variant="ghost">
-                                        Open in New Tab
-                                    </Button>
-                                </a>
-                                <a href={downloadUrl} download target="_blank" rel="noreferrer">
-                                    <Button size="sm" variant="outline">
-                                        <Download className="h-4 w-4 mr-2" />
-                                        Download
-                                    </Button>
-                                </a>
-                            </>
-                        )}
-                        <Button size="sm" variant="ghost" onClick={onClose} className="ml-2">
-                            <X className="h-4 w-4" />
-                        </Button>
+            <DialogContent hideClose className="max-w-[100vw] w-[100vw] h-[100vh] md:max-w-[95vw] md:w-[95vw] md:h-[95vh] flex flex-col p-0 bg-background border shadow-2xl md:rounded-xl overflow-hidden z-[200]">
+                <DialogHeader className="pt-6 px-4 pb-4 md:p-4 border-b bg-background shrink-0">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <DialogTitle className="md:flex-1 md:mr-4 md:truncate">{item.basename}</DialogTitle>
+                        <div className="flex items-center justify-between md:justify-start gap-2 flex-shrink-0">
+                            {downloadUrl && (
+                                <>
+                                    <a href={downloadUrl} target="_blank" rel="noreferrer">
+                                        <Button size="sm" variant="ghost">
+                                            Open in New Tab
+                                        </Button>
+                                    </a>
+                                    <a href={downloadUrl} download target="_blank" rel="noreferrer">
+                                        <Button size="sm" variant="outline">
+                                            <Download className="h-4 w-4 mr-2" />
+                                            Download
+                                        </Button>
+                                    </a>
+                                </>
+                            )}
+                            <Button size="sm" variant="ghost" onClick={onClose} className="ml-auto">
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
                 </DialogHeader>
 
-                <div className={`flex-1 bg-muted flex items-center justify-center ${isPdf ? 'p-0 overflow-hidden' : 'p-4 overflow-auto'}`}>
+                <div className={`flex-1 bg-muted ${isPdf ? 'p-0 overflow-hidden' : 'p-4 overflow-auto flex items-center justify-center'}`}>
                     {isImage && downloadUrl ? (
                         <img src={downloadUrl} alt={item.basename} className="max-w-full max-h-full object-contain shadow-lg rounded-lg" />
                     ) : isPdf && downloadUrl ? (
-                        <object data={downloadUrl} type="application/pdf" className="w-full h-full rounded-lg shadow-lg bg-white">
-                            <div className="flex flex-col items-center justify-center h-full gap-4">
-                                <p className="text-muted-foreground">Unable to display PDF directly.</p>
-                                <a href={downloadUrl} download target="_blank" rel="noreferrer">
-                                    <Button>Download PDF</Button>
-                                </a>
-                            </div>
-                        </object>
+                        isMobile ? (
+                            <PdfViewer downloadUrl={downloadUrl} filename={item.basename} />
+                        ) : (
+                            <iframe
+                                src={downloadUrl}
+                                className="w-full h-full border-0"
+                                title={item.basename}
+                            />
+                        )
                     ) : isVideo && downloadUrl ? (
                         <video src={downloadUrl} controls className="max-w-full max-h-full rounded-lg shadow-lg">
                             Your browser does not support video playback.
@@ -146,21 +157,23 @@ export function FilePreviewModal({ item, isOpen, onClose }: FilePreviewModalProp
                         <pre className="bg-card p-4 rounded-lg shadow-inner w-full h-full overflow-auto text-sm font-mono whitespace-pre-wrap">
                             {textContent}
                         </pre>
+                    ) : ['docx'].includes(fileExt) && downloadUrl ? (
+                        <DocxViewer downloadUrl={downloadUrl} filename={item.basename} />
                     ) : isOfficeDoc ? (
                         <div className="text-center space-y-4 bg-card p-8 rounded-xl shadow-lg">
                             <div className="text-6xl">
-                                {['doc', 'docx'].includes(fileExt) && '📄'}
+                                {['doc'].includes(fileExt) && '📄'}
                                 {['xls', 'xlsx'].includes(fileExt) && '📊'}
                                 {['ppt', 'pptx'].includes(fileExt) && '📽️'}
                             </div>
                             <div>
                                 <h3 className="text-lg font-semibold mb-2">
-                                    {['doc', 'docx'].includes(fileExt) && 'Microsoft Word Document'}
+                                    {['doc'].includes(fileExt) && 'Microsoft Word Document'}
                                     {['xls', 'xlsx'].includes(fileExt) && 'Microsoft Excel Spreadsheet'}
                                     {['ppt', 'pptx'].includes(fileExt) && 'Microsoft PowerPoint Presentation'}
                                 </h3>
                                 <p className="text-muted-foreground text-sm mb-4">
-                                    Office documents cannot be previewed in the browser.
+                                    This file type cannot be previewed in the browser.
                                 </p>
                             </div>
                             {downloadUrl && (
