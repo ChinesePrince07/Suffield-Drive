@@ -263,7 +263,11 @@ export function FileListView({ items, selectedIds, onSelectionChange, onSelectAl
                                             {formatKind(item.mime, isFolder, item.basename)}
                                         </TableCell>
                                         <TableCell className="text-right text-sm text-muted-foreground py-3 pr-4">
-                                            {isFolder ? '--' : formatSize(item.size)}
+                                            {isFolder
+                                                ? (item.childCount !== undefined
+                                                    ? `${item.childCount} item${item.childCount !== 1 ? 's' : ''}`
+                                                    : '--')
+                                                : formatSize(item.size)}
                                         </TableCell>
                                     </TableRow>
                                 </FileContextMenu>

@@ -56,6 +56,7 @@ export function UploadButton({ currentPath = '/' }: UploadButtonProps) {
 
         setIsUploading(true);
         const total = files.length;
+        let completed = 0;
         let succeeded = 0;
         let failed = 0;
 
@@ -67,50 +68,73 @@ export function UploadButton({ currentPath = '/' }: UploadButtonProps) {
             currentFile: '',
         });
 
-        // Upload files with higher concurrency for speed
-        const concurrencyLimit = 10;
+        // Upload files with controlled concurrency for speed while tracking progress
+        const concurrencyLimit = 5;
         const fileArray = Array.from(files);
 
-        for (let i = 0; i < fileArray.length; i += concurrencyLimit) {
-            const batch = fileArray.slice(i, i + concurrencyLimit);
+        // Create a queue-based uploader for real-time progress updates
+        const uploadQueue = fileArray.map((file, index) => async () => {
+            setUploadStatus((prev) => ({
+                ...prev,
+                currentFile: file.name,
+            }));
 
-            const results = await Promise.allSettled(
-                batch.map(async (file) => {
-                    setUploadStatus((prev) => ({
-                        ...prev,
-                        currentFile: file.name,
-                    }));
+            const formData = new FormData();
+            formData.append('file', file);
 
-                    const formData = new FormData();
-                    formData.append('file', file);
+            // For folder uploads, webkitRelativePath gives the path relative to the selected folder
+            const relativePath = file.webkitRelativePath;
+            const uploadPath = relativePath
+                ? (currentPath === '/' ? '' : currentPath) + '/' + relativePath.split('/').slice(0, -1).join('/')
+                : currentPath;
 
-                    // For folder uploads, webkitRelativePath gives the path relative to the selected folder
-                    const relativePath = file.webkitRelativePath;
-                    const uploadPath = relativePath
-                        ? (currentPath === '/' ? '' : currentPath) + '/' + relativePath.split('/').slice(0, -1).join('/')
-                        : currentPath;
+            formData.append('path', uploadPath);
 
-                    formData.append('path', uploadPath);
-                    return uploadFile(formData);
-                })
-            );
-
-            results.forEach((result) => {
-                if (result.status === 'fulfilled' && result.value.success) {
+            try {
+                const result = await uploadFile(formData);
+                if (result.success) {
                     succeeded++;
                 } else {
                     failed++;
                 }
-            });
+            } catch {
+                failed++;
+            }
 
+            completed++;
             setUploadStatus({
-                current: Math.min(i + batch.length, total),
+                current: completed,
                 total,
                 succeeded,
                 failed,
-                currentFile: '',
+                currentFile: completed < total ? '' : '',
             });
+        });
+
+        // Process with concurrency limit
+        const executing: Promise<void>[] = [];
+        for (const task of uploadQueue) {
+            const p = task();
+            executing.push(p);
+
+            if (executing.length >= concurrencyLimit) {
+                await Promise.race(executing);
+                // Remove completed promises
+                for (let i = executing.length - 1; i >= 0; i--) {
+                    // Check if promise is settled by racing with an immediate resolve
+                    const settled = await Promise.race([
+                        executing[i].then(() => true).catch(() => true),
+                        Promise.resolve(false)
+                    ]);
+                    if (settled) {
+                        executing.splice(i, 1);
+                    }
+                }
+            }
         }
+
+        // Wait for remaining uploads
+        await Promise.all(executing);
 
         // Brief delay to show completion
         await new Promise((resolve) => setTimeout(resolve, 1000));

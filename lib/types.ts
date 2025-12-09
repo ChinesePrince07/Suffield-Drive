@@ -7,4 +7,6 @@ export interface FileItem {
     type: 'directory' | 'file';
     mime?: string;
     etag?: string;
+    childCount?: number;
 }
+

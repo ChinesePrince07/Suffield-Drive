@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -23,6 +23,8 @@ interface RenameFileModalProps {
 export function RenameFileModal({ isOpen, onClose, item, onRenameComplete }: RenameFileModalProps) {
     const [newName, setNewName] = useState('');
     const [isRenaming, setIsRenaming] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const prevItemRef = useRef<string | null>(null);
 
     // Extract name and extension
     const getNameAndExtension = (basename: string, isFolder: boolean) => {
@@ -42,12 +44,26 @@ export function RenameFileModal({ isOpen, onClose, item, onRenameComplete }: Ren
     const isFolder = item?.type === 'directory';
     const { name: originalName, extension } = item ? getNameAndExtension(item.basename, isFolder) : { name: '', extension: '' };
 
+    // Only reset the name when the modal opens with a different item
     useEffect(() => {
-        if (isOpen && item) {
+        if (isOpen && item && item.filename !== prevItemRef.current) {
+            prevItemRef.current = item.filename;
             const { name } = getNameAndExtension(item.basename, item.type === 'directory');
             setNewName(name);
+            // Focus and select after a small delay to ensure the dialog is rendered
+            setTimeout(() => {
+                if (inputRef.current) {
+                    inputRef.current.focus();
+                    inputRef.current.select();
+                }
+            }, 50);
         }
-    }, [isOpen, item]);
+
+        // Reset tracking when modal closes
+        if (!isOpen) {
+            prevItemRef.current = null;
+        }
+    }, [isOpen, item?.filename, item?.basename, item?.type]);
 
     const handleRename = async () => {
         if (!item || !newName.trim()) return;
@@ -80,6 +96,7 @@ export function RenameFileModal({ isOpen, onClose, item, onRenameComplete }: Ren
                 <div className="grid gap-4 py-4">
                     <div className="flex items-center gap-1">
                         <Input
+                            ref={inputRef}
                             id="name"
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
@@ -90,7 +107,6 @@ export function RenameFileModal({ isOpen, onClose, item, onRenameComplete }: Ren
                                     handleRename();
                                 }
                             }}
-                            autoFocus
                         />
                         {extension && (
                             <span className="text-muted-foreground font-mono text-sm px-2 py-2 bg-muted rounded">

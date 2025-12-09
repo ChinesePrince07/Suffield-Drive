@@ -90,6 +90,29 @@ export async function uploadFile(formData: FormData) {
         // Handle path construction carefully
         const uploadPath = path === '/' ? `/${file.name}` : `${path}/${file.name}`;
 
+        // Create parent directories if they don't exist (for folder uploads)
+        if (path && path !== '/') {
+            const pathParts = path.split('/').filter(Boolean);
+            let currentPath = '';
+            for (const part of pathParts) {
+                currentPath += '/' + part;
+                try {
+                    // Check if directory exists, if not create it
+                    const exists = await client.exists(currentPath);
+                    if (!exists) {
+                        await client.createDirectory(currentPath);
+                    }
+                } catch {
+                    // Try to create anyway if exists check fails
+                    try {
+                        await client.createDirectory(currentPath);
+                    } catch {
+                        // Directory might already exist, continue
+                    }
+                }
+            }
+        }
+
         await client.putFileContents(uploadPath, buffer);
         revalidatePath('/');
         return { success: true };

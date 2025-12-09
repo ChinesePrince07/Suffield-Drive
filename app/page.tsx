@@ -103,8 +103,11 @@ export default async function Home({
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col gap-1">
             <Breadcrumbs currentPath={path} />
+            <span className="text-sm text-muted-foreground">
+              {files.length} item{files.length !== 1 ? 's' : ''}
+            </span>
           </div>
           <div className="flex gap-2 items-center">
             <CreateFolderButton currentPath={path} />
